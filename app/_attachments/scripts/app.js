@@ -54,22 +54,20 @@ myApp.service('checkSrv', function($http, $q){
 });
 
 myApp.service('viewSrv', function($http, $q){
-	this.viewSearch = function(key){
+	this.viewSearch = function(key, key2){
 		var q = $q.defer();
 		var searchResult = [];
-		var url = '127.0.0.1:5984/pokemon2/_design/app/_view/byname?key="';
-		var keyurl = url + encodeURIComponent(key) + '"';
-		console.log(keyurl);
-		$http.get(keyurl)
-		.then(function(data){
-			console.log("KEYURL DATA");
+		var url = "127.0.0.1:5984/pokemon2/_design/app/_view/byname?";
+		var keyurl = url + 'startkey="' + key + '"&endkey="' + key2 + '"';
+		console.log(keyurl)
+		$http.get(url).then(function(data){
 			console.log(data);
 			for (var i = 0; i < data.data.rows.length; i++){
-				searchResult.push(data.data.rows[i].key);
+				searchResult.push(data.data.rows[i]);
 			}
 			q.resolve(searchResult);
-		}, function(err){ q.reject(err); });
-		return q.promise; 
+		}, function(err){ q.reject(err); })
+		return q.promise;
 	};
 });
 
@@ -93,9 +91,11 @@ myApp.controller('homeCtrl', ['$scope', 'couchSrv', 'checkSrv', 'viewSrv', funct
 	
 	$('#searchButton').on('click', function(e){
 		console.log("Clicked!");
-		var firstDate = $("#firstDate").val();
-		viewSrv.viewSearch(firstDate).then(function(data){
+		var startDate = $("#firstDate").val();
+		var endDate = $("#secondDate").val();
+		viewSrv.viewSearch(startDate, endDate).then(function(data){
 			console.log(data);
+			$scope.result = data;
 		}, function(err){ console.log(err); })
 	})
 }]);
