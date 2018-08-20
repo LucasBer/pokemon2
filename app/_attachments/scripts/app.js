@@ -35,16 +35,37 @@ myApp.service("couchSrv", function($http, $q){
 		return q.promise;
 	};
 });
-myApp.controller('homeCtrl', ['$scope', 'couchSrv', function($scope, couchSrv){
+
+myApp.service('checkSrv', function($http, $q){
+	this.CheckPokemon = function (){
+		var q = $q.defer();
+		$http.get("http://127.0.0.1:5984/pokemon2/_all_docs")
+		.then(function(data){
+			var pokemonids = [];
+			for (var i = 0; i < data.data.rows.length - 1; i++){
+				pokemonids.push(data.data.rows[i].id) 
+			}
+			console.log("POKEMON IDS FOUND");
+			console.log(pokemonids);
+			q.resolve(pokemonids);
+		}, function(err){ q.reject(err); });
+		return q.promise;
+	};
+});
+
+myApp.controller('homeCtrl', ['$scope', 'couchSrv', 'checkSrv', function($scope, couchSrv, checkSrv){
 	$( document ).ready(function() {
+		var pokemonIds = [];
+		checkSrv.CheckPokemon().then(function(data){
+			console.log("IN CHECKPOKEMON");
+			pokemonIds = data;
+		}, function(err){ console.log(err);})
 		couchSrv.getObject().then(function(data){
 			for (var i = 0; i < data.length; i++){
+				if (!($.inArray(data[i].name, pokemonIds))){
 				couchSrv.setObject(data[i].name, data[i]);
+				}
 			}
-			var testdate = data[0].owned;
-			console.log(testdate);
-			testdate = new Date(testdate);
-			console.log(testdate);
 		}, function(err){
 			console.log(err);
 		});
