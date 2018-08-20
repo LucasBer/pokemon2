@@ -53,7 +53,27 @@ myApp.service('checkSrv', function($http, $q){
 	};
 });
 
-myApp.controller('homeCtrl', ['$scope', 'couchSrv', 'checkSrv', function($scope, couchSrv, checkSrv){
+myApp.service('viewSrv', function($http, $q){
+	this.viewSearch = function(key){
+		var q = $q.defer();
+		var searchResult = [];
+		var url = '127.0.0.1:5984/pokemon2/_design/app/_view/byname?key="';
+		var keyurl = url + encodeURIComponent(key) + '"';
+		console.log(keyurl);
+		$http.get(keyurl)
+		.then(function(data){
+			console.log("KEYURL DATA");
+			console.log(data);
+			for (var i = 0; i < data.data.rows.length; i++){
+				searchResult.push(data.data.rows[i].key);
+			}
+			q.resolve(searchResult);
+		}, function(err){ q.reject(err); });
+		return q.promise; 
+	};
+});
+
+myApp.controller('homeCtrl', ['$scope', 'couchSrv', 'checkSrv', 'viewSrv', function($scope, couchSrv, checkSrv, viewSrv){
 	$( document ).ready(function() {
 		var pokemonIds = [];
 		checkSrv.CheckPokemon().then(function(data){
@@ -70,4 +90,12 @@ myApp.controller('homeCtrl', ['$scope', 'couchSrv', 'checkSrv', function($scope,
 			console.log(err);
 		});
 	});
+	
+	$('#searchButton').on('click', function(e){
+		console.log("Clicked!");
+		var firstDate = $("#firstDate").val();
+		viewSrv.viewSearch(firstDate).then(function(data){
+			console.log(data);
+		}, function(err){ console.log(err); })
+	})
 }]);
